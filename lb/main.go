@@ -4,18 +4,16 @@ package main
 // read: https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/
 
 // load balance a get request in round robin
-//  -- add support for round robin (which one is the next?, counter? a circular list?)
-// take in a request, read the HTTP verb (GET, PUT, ...)
-//   -- test that the POST, PUT requests work
-// create new request to the actual server with existing headers and body /OK
-//  - verify that the body works!
-// (optional) add a load balancer header to it
-// take the response from actual server and relay it back to the client /OK
+//  -- add support for round robin (which one is the next?, counter? a circular list?) /OK
 
 // TODO maybe?
 // - this could support HTTPS and break it before sending the request as plain HTTP to the target
+// - add health checks if enabled
+// - add different load balancing methods, weighted, least connections, ip_hash, some other hash etc..
+//
 
 import (
+	"container/ring"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -24,17 +22,18 @@ import (
 	"strings"
 )
 
-const servers = "http://localhost:4001"
-
 func forwardRequest(w http.ResponseWriter, r *http.Request) {
 	client := http.DefaultClient
-	r.Host = servers
 
-	req, _ := http.NewRequest(r.Method, servers, nil)
+	servers := configuration.servers.Move(1)
+	configuration.servers = servers
+
+	req, _ := http.NewRequest(r.Method, servers.Value.(Server).url, nil)
 	req.Header = r.Header
 	req.Header.Add("X-Forwarded-For", r.RemoteAddr)
 	req.Body = r.Body
 
+	// TODO: handle connection refused error gracefully
 	response, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -57,7 +56,7 @@ type Server struct {
 	url string
 }
 type Configuration struct {
-	servers []Server
+	servers *ring.Ring
 }
 
 func ParseConfiguration() (Configuration, error) {
@@ -78,7 +77,13 @@ func ParseConfiguration() (Configuration, error) {
 		servers = append(servers, server)
 	}
 
-	return Configuration{servers: servers}, nil
+	r := ring.New(len(servers))
+	for i := 0; i < len(servers); i++ {
+		r.Value = servers[i]
+		r = r.Next()
+	}
+
+	return Configuration{servers: r}, nil
 }
 
 var configuration Configuration
