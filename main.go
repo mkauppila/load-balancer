@@ -18,10 +18,10 @@ import (
 	"log"
 	"net/http"
 
-	. "github.com/mkauppila/load-balancer/context"
+	"github.com/mkauppila/load-balancer/context"
 )
 
-func forwardRequest(conf Context, w http.ResponseWriter, r *http.Request) {
+func forwardRequest(conf context.Context, w http.ResponseWriter, r *http.Request) {
 	client := http.DefaultClient
 
 	// If we have multiple goroutines running this will be messed up?
@@ -46,18 +46,17 @@ func forwardRequest(conf Context, w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func start(conf Context) {
+func start(conf context.Context) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { forwardRequest(conf, w, r) })
 	// AP: what is DefaultServeMux?
 	log.Fatal(http.ListenAndServe(":4000", nil))
 }
 
 func main() {
-	conf, err := ParseConfiguration()
+	conf, err := context.ParseConfiguration()
 	if err != nil {
 		log.Fatalln("Failed to parse configuration with error: ", err)
 	}
-	fmt.Println(conf)
 
 	fmt.Println("Starting up!")
 	start(conf)
