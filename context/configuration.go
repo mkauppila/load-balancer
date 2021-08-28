@@ -1,4 +1,4 @@
-package configuration
+package context
 
 import (
 	"container/ring"
@@ -25,7 +25,7 @@ func (c *Configuration) GetNextServer() Server {
 // needs to update some values for that server (like connection count)
 
 func ParseConfiguration() (Configuration, error) {
-	data, err := ioutil.ReadFile("../lb.conf")
+	data, err := ioutil.ReadFile("lb.conf")
 	if err != nil {
 		return Configuration{}, errors.New("No configuration file exists.")
 	}

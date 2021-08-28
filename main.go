@@ -14,10 +14,11 @@ package main
 
 import (
 	"fmt"
-	. "internal/configuration"
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	. "github.com/mkauppila/load-balancer/context"
 )
 
 func forwardRequest(conf Configuration, w http.ResponseWriter, r *http.Request) {
