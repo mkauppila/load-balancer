@@ -13,24 +13,23 @@ package main
 //
 
 import (
-	"container/ring"
-	"errors"
 	"fmt"
+	. "internal/configuration"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
 )
 
-func forwardRequest(w http.ResponseWriter, r *http.Request) {
+func forwardRequest(conf Configuration, w http.ResponseWriter, r *http.Request) {
 	client := http.DefaultClient
 
-	servers := configuration.servers.Move(1)
-	configuration.servers = servers
+	// If we have multiple goroutines running this will be messed up?
+	server := conf.GetNextServer()
 
-	req, _ := http.NewRequest(r.Method, servers.Value.(Server).url, nil)
+	req, _ := http.NewRequest(r.Method, server.Url, nil)
 	req.Header = r.Header
 	req.Header.Add("X-Forwarded-For", r.RemoteAddr)
+	// Add rest of the custom headers
 	req.Body = r.Body
 
 	// TODO: handle connection refused error gracefully
@@ -46,56 +45,19 @@ func forwardRequest(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func start() {
-	http.HandleFunc("/", forwardRequest)
+func start(conf Configuration) {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { forwardRequest(conf, w, r) })
 	// AP: what is DefaultServeMux?
 	log.Fatal(http.ListenAndServe(":4000", nil))
 }
 
-type Server struct {
-	url string
-}
-type Configuration struct {
-	servers *ring.Ring
-}
-
-func ParseConfiguration() (Configuration, error) {
-	data, err := ioutil.ReadFile("../lb.conf")
-	if err != nil {
-		return Configuration{}, errors.New("No configuration file exists.")
-	}
-
-	var servers []Server
-	for _, line := range strings.Split(string(data), "\n") {
-		if len(line) == 0 {
-			break
-		}
-		d := strings.Split(line, " ")
-		url := d[1]
-		server := Server{url: url}
-
-		servers = append(servers, server)
-	}
-
-	r := ring.New(len(servers))
-	for i := 0; i < len(servers); i++ {
-		r.Value = servers[i]
-		r = r.Next()
-	}
-
-	return Configuration{servers: r}, nil
-}
-
-var configuration Configuration
-
 func main() {
 	conf, err := ParseConfiguration()
 	if err != nil {
-		log.Fatalln("Failed to parse configuration...", err)
+		log.Fatalln("Failed to parse configuration with error: ", err)
 	}
 	fmt.Println(conf)
-	configuration = conf
 
 	fmt.Println("Starting up!")
-	start()
+	start(conf)
 }
