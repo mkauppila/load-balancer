@@ -20,16 +20,16 @@ func logRequestDetails(r *http.Request) {
 func page(w http.ResponseWriter, r *http.Request) {
 	logRequestDetails(r)
 
-	fmt.Fprintf(w, fmt.Sprintf("Hello from %d", os.Getpid()))
-}
-
-func start() {
-	http.HandleFunc("/", page)
-	port := os.Getenv("PORT")
-	fmt.Printf("Running on port: %s\n", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
+	fmt.Fprintf(w, "Hello from %d", os.Getpid())
 }
 
 func main() {
-	start()
+	http.HandleFunc("/", page)
+	port := os.Getenv("PORT")
+	if port == "" {
+		panic("no PORT env defined")
+	}
+	fmt.Printf("Running on port: %s\n", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
+	fmt.Println("Shutting down the test API")
 }
