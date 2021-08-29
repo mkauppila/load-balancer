@@ -12,7 +12,6 @@ type Context struct {
 }
 
 func (c *Context) GetNextServer() Server {
-	servers := c.servers.Move(1)
-	c.servers = servers // this is no obsolete?
-	return servers.Value.(Server)
+	c.servers = c.servers.Move(1)
+	return c.servers.Value.(Server)
 }

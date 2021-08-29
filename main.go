@@ -21,11 +21,8 @@ import (
 	"github.com/mkauppila/load-balancer/context"
 )
 
-func forwardRequest(conf context.Context, w http.ResponseWriter, r *http.Request) {
-	client := http.DefaultClient
-
-	// If we have multiple goroutines running this will be messed up?
-	server := conf.GetNextServer()
+func forwardRequest(context *context.Context, w http.ResponseWriter, r *http.Request) {
+	server := context.GetNextServer()
 
 	req, _ := http.NewRequest(r.Method, server.Url, nil)
 	req.Header = r.Header
@@ -34,6 +31,7 @@ func forwardRequest(conf context.Context, w http.ResponseWriter, r *http.Request
 	req.Body = r.Body
 
 	// TODO: handle connection refused error gracefully
+	client := http.DefaultClient
 	response, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -46,18 +44,18 @@ func forwardRequest(conf context.Context, w http.ResponseWriter, r *http.Request
 	w.Write(body)
 }
 
-func start(conf context.Context) {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { forwardRequest(conf, w, r) })
+func start(context *context.Context) {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { forwardRequest(context, w, r) })
 	// AP: what is DefaultServeMux?
 	log.Fatal(http.ListenAndServe(":4000", nil))
 }
 
 func main() {
-	conf, err := context.ParseConfiguration()
+	context, err := context.ParseConfiguration()
 	if err != nil {
 		log.Fatalln("Failed to parse configuration with error: ", err)
 	}
 
 	fmt.Println("Starting up!")
-	start(conf)
+	start(&context)
 }
