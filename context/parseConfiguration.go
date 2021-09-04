@@ -20,7 +20,7 @@ func ParseConfiguration() (Context, error) {
 		}
 		d := strings.Split(line, " ")
 		url := d[1]
-		server := Server{Url: strings.Trim(url, " \n\t")}
+		server := Server{Url: strings.Trim(url, " \n\t"), isHealthy: true}
 
 		servers = append(servers, server)
 	}
@@ -34,5 +34,9 @@ func ParseConfiguration() (Context, error) {
 	context := Context{servers: r, NextServer: make(chan Server)}
 	// wont this goroutine dangle if the context is deleted?
 	go context.nextServerStream()
+	for _, server := range servers {
+		fmt.Println("Kick up health check for ", server.Url)
+		go context.doHealthCheck(server)
+	}
 	return context, nil
 }
