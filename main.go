@@ -22,7 +22,7 @@ import (
 )
 
 func forwardRequest(context *context.Context, w http.ResponseWriter, r *http.Request) {
-	server := context.GetNextServer()
+	server := <-context.NextServer
 
 	req, _ := http.NewRequest(r.Method, server.Url, nil)
 	req.Header = r.Header
@@ -55,6 +55,7 @@ func main() {
 	if err != nil {
 		log.Fatalln("Failed to parse configuration with error: ", err)
 	}
+	defer context.Close()
 
 	fmt.Println("Starting up!")
 	start(&context)

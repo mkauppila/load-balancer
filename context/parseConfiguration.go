@@ -31,5 +31,8 @@ func ParseConfiguration() (Context, error) {
 		r = r.Next()
 	}
 
-	return Context{servers: r}, nil
+	context := Context{servers: r, NextServer: make(chan Server)}
+	// wont this goroutine dangle if the context is deleted?
+	go context.nextServerStream()
+	return context, nil
 }
