@@ -47,7 +47,7 @@ func forwardRequest(context *context.Context, w http.ResponseWriter, r *http.Req
 func start(context *context.Context) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { forwardRequest(context, w, r) })
 	// AP: what is DefaultServeMux?
-	log.Fatal(http.ListenAndServe(":4000", nil))
+	log.Fatal(http.ListenAndServe("localhost:4000", nil))
 }
 
 func main() {
