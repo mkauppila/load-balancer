@@ -25,6 +25,32 @@ type Configuration struct {
 	Servers     []Server
 }
 
+func ParseConfiguration() (Configuration, error) {
+	data, err := ioutil.ReadFile("lb.conf")
+	if err != nil {
+		return Configuration{}, errors.New("no configuration file exists")
+	}
+
+	var conf Configuration
+	for _, line := range strings.Split(string(data), "\n") {
+		if len(line) == 0 {
+			break
+		}
+
+		if strings.HasPrefix(line, "health_check") {
+			healthCheck := parseHealthCheck(line)
+			conf.HealthCheck = healthCheck
+		} else if strings.HasPrefix(line, "server") {
+			server := parseServer(line)
+			conf.Servers = append(conf.Servers, server)
+		} else {
+			// unknown, skip or fail?
+		}
+	}
+
+	return conf, nil
+}
+
 func parseHealthCheck(line string) (hc HealthCheck) {
 	splittedLine := strings.Split(line, " ")
 	for index, item := range splittedLine {
@@ -56,30 +82,4 @@ func parseServer(line string) (server Server) {
 	splittedLine := strings.Split(line, " ")
 	server.Url = splittedLine[1]
 	return
-}
-
-func ParseConfiguration() (Configuration, error) {
-	data, err := ioutil.ReadFile("lb.conf")
-	if err != nil {
-		return Configuration{}, errors.New("no configuration file exists")
-	}
-
-	var conf Configuration
-	for _, line := range strings.Split(string(data), "\n") {
-		if len(line) == 0 {
-			break
-		}
-
-		if strings.HasPrefix(line, "health_check") {
-			healthCheck := parseHealthCheck(line)
-			conf.HealthCheck = healthCheck
-		} else if strings.HasPrefix(line, "server") {
-			server := parseServer(line)
-			conf.Servers = append(conf.Servers, server)
-		} else {
-			// unknown, skip or fail?
-		}
-	}
-
-	return conf, nil
 }

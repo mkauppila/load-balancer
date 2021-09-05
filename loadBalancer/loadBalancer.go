@@ -19,7 +19,7 @@ type Server struct {
 type LoadBalancer struct {
 	allServers []*Server
 	// The healthyServers is access from 2 goroutines atm. Unsafe?
-	healthyServers *ring.Ring // rename to healthyServers
+	healthyServers *ring.Ring
 	// Actually this should rather be a RWMutex
 	NextServer chan *Server
 }
@@ -37,7 +37,11 @@ func NewLoadBalancer(conf configuration.Configuration) LoadBalancer {
 	}
 	fmt.Println(servers)
 
-	loadBalancer := LoadBalancer{healthyServers: r, NextServer: make(chan *Server), allServers: servers}
+	loadBalancer := LoadBalancer{
+		healthyServers: r,
+		NextServer:     make(chan *Server),
+		allServers:     servers,
+	}
 
 	// wont this goroutine dangle if the context is deleted?
 	go loadBalancer.nextServerStream()
