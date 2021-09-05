@@ -24,12 +24,18 @@ type Configuration struct {
 	Servers     []Server
 }
 
+func ParseConfiguration(contents []byte) (conf Configuration, err error) {
+	for _, line := range strings.Split(string(contents), "\n") {
 		if len(line) == 0 {
-			break
+			continue
 		}
+		line = strings.TrimSpace(line)
 
 		if strings.HasPrefix(line, "health_check") {
-			healthCheck := parseHealthCheck(line)
+			healthCheck, err := parseHealthCheck(line)
+			if err != nil {
+				return conf, err
+			}
 			conf.HealthCheck = healthCheck
 		} else if strings.HasPrefix(line, "server") {
 			server := parseServer(line)
@@ -38,11 +44,10 @@ type Configuration struct {
 			// unknown, skip or fail?
 		}
 	}
-
 	return conf, nil
 }
 
-func parseHealthCheck(line string) (hc HealthCheck) {
+func parseHealthCheck(line string) (hc HealthCheck, err error) {
 	splittedLine := strings.Split(line, " ")
 	for index, item := range splittedLine {
 		switch index {
@@ -52,25 +57,22 @@ func parseHealthCheck(line string) (hc HealthCheck) {
 			} else if item == "off" {
 				hc.Enabled = false
 			} else {
-				/// do erorr or warning etc!
+				return hc, errors.New("Unknown option: " + item)
 			}
-		case 2: // interval
+		case 2:
 			interval, err := strconv.ParseInt(item, 10, 32)
 			if err != nil {
-				// do some error1
+				return hc, errors.New("interval needs to be an integer")
 			}
 			hc.IntervalMs = int(interval)
-		case 3: // path
-			hc.Path = item // should check for / or something?
-		default:
-			// fail!
+		case 3:
+			hc.Path = item
 		}
 	}
-	return
+	return hc, nil
 }
 
-func parseServer(line string) (server Server) {
+func parseServer(line string) Server {
 	splittedLine := strings.Split(line, " ")
-	server.Url = splittedLine[1]
-	return
+	return Server{Url: splittedLine[1]}
 }
