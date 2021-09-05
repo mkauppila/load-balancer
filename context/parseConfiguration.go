@@ -3,6 +3,7 @@ package context
 import (
 	"container/ring"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"strings"
 )
@@ -13,14 +14,14 @@ func ParseConfiguration() (Context, error) {
 		return Context{}, errors.New("no configuration file exists")
 	}
 
-	var servers []Server
+	var servers []*Server
 	for _, line := range strings.Split(string(data), "\n") {
 		if len(line) == 0 {
 			break
 		}
 		d := strings.Split(line, " ")
 		url := d[1]
-		server := Server{Url: strings.Trim(url, " \n\t"), isHealthy: true}
+		server := &Server{Url: strings.Trim(url, " \n\t"), isHealthy: true}
 
 		servers = append(servers, server)
 	}
@@ -31,10 +32,10 @@ func ParseConfiguration() (Context, error) {
 		r = r.Next()
 	}
 
-	context := Context{servers: r, NextServer: make(chan Server)}
+	context := Context{healthyServers: r, NextServer: make(chan *Server), allServers: servers}
 	// wont this goroutine dangle if the context is deleted?
 	go context.nextServerStream()
-	for _, server := range servers {
+	for _, server := range context.allServers {
 		fmt.Println("Kick up health check for ", server.Url)
 		go context.doHealthCheck(server)
 	}

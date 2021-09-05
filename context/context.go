@@ -13,8 +13,10 @@ type Server struct {
 }
 
 type Context struct {
-	servers    *ring.Ring
-	NextServer chan Server
+	allServers []*Server
+	// The healthyServers is access from 2 goroutines atm. Unsafe?
+	healthyServers *ring.Ring // rename to healthyServers
+	NextServer     chan *Server
 }
 
 func (c *Context) nextServerStream() {
@@ -28,13 +30,25 @@ func (c *Context) Close() {
 	close(c.NextServer)
 }
 
-func (c *Context) getNextServer() Server {
-	c.servers = c.servers.Move(1)
-	return c.servers.Value.(Server)
+func (c *Context) getNextServer() *Server {
+	c.healthyServers = c.healthyServers.Move(1)
+	return c.healthyServers.Value.(*Server)
 }
 
-func (c *Context) doHealthCheck(server Server) {
-	fmt.Println("run a health check", server)
+func (c *Context) doHealthCheck(server *Server) {
+	removeUnhealthy := func(server *Server) {
+		ring := c.healthyServers
+		for len := 0; len < c.healthyServers.Len(); len++ {
+			if ring.Value.(*Server).Url == server.Url {
+				ring.Unlink(1)
+
+				break
+			}
+
+			ring = ring.Move(1)
+		}
+	}
+
 	for {
 		// Run the check once in 2 seconds
 		time.Sleep(time.Second * 2)
@@ -44,6 +58,7 @@ func (c *Context) doHealthCheck(server Server) {
 		if err != nil {
 			fmt.Println("Health check failed for", server.Url)
 			server.isHealthy = false
+			removeUnhealthy(server)
 		} else {
 			if response.StatusCode == http.StatusOK {
 				fmt.Println("Health check OK for ", server.Url)
@@ -52,6 +67,7 @@ func (c *Context) doHealthCheck(server Server) {
 				server.isHealthy = false
 				fmt.Println("Health check failed for", server.Url,
 					" wrong response status ", response.StatusCode)
+				removeUnhealthy(server)
 			}
 		}
 	}
