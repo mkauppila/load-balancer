@@ -2,7 +2,6 @@ package configuration
 
 import (
 	"errors"
-	"io/ioutil"
 	"strconv"
 	"strings"
 )
@@ -25,14 +24,6 @@ type Configuration struct {
 	Servers     []Server
 }
 
-func ParseConfiguration() (Configuration, error) {
-	data, err := ioutil.ReadFile("lb.conf")
-	if err != nil {
-		return Configuration{}, errors.New("no configuration file exists")
-	}
-
-	var conf Configuration
-	for _, line := range strings.Split(string(data), "\n") {
 		if len(line) == 0 {
 			break
 		}

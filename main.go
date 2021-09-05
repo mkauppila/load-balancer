@@ -9,6 +9,7 @@ package main
 // - add different load balancing methods, weighted, least connections, ip_hash, some other hash etc..
 
 import (
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -17,9 +18,14 @@ import (
 )
 
 func main() {
-	conf, err := configuration.ParseConfiguration()
+	contents, err := ioutil.ReadFile("lb.conf")
 	if err != nil {
-		log.Fatalln("Failed to parse configuration with error: ", err)
+		panic("no configuration file exists")
+	}
+
+	conf, err := configuration.ParseConfiguration(contents)
+	if err != nil {
+		log.Fatalln("Failed to parse configuration. Error: ", err)
 	}
 
 	loadBalancer := loadBalancer.NewLoadBalancer(conf)
