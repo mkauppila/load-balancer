@@ -16,12 +16,19 @@ type Server struct {
 	isHealthy bool
 }
 
+type HealthCheck struct {
+	Enabled    bool
+	Path       string
+	IntervalMs int
+}
+
 type LoadBalancer struct {
 	allServers []*Server
 	// The healthyServers is access from 2 goroutines atm. Unsafe?
 	healthyServers *ring.Ring
 	// Actually this should rather be a RWMutex
-	NextServer chan *Server
+	NextServer  chan *Server
+	healthCheck HealthCheck
 }
 
 func NewLoadBalancer(conf configuration.Configuration) LoadBalancer {
@@ -41,14 +48,23 @@ func NewLoadBalancer(conf configuration.Configuration) LoadBalancer {
 		healthyServers: r,
 		NextServer:     make(chan *Server),
 		allServers:     servers,
+		healthCheck: HealthCheck{
+			Enabled:    conf.HealthCheck.Enabled,
+			Path:       conf.HealthCheck.Path,
+			IntervalMs: conf.HealthCheck.IntervalMs,
+		},
 	}
 
 	// wont this goroutine dangle if the context is deleted?
 	go loadBalancer.nextServerStream()
-	for _, server := range loadBalancer.allServers {
-		fmt.Println("Kick up health check for ", server.Url)
-		go loadBalancer.doHealthCheck(server)
+
+	if loadBalancer.healthCheck.Enabled {
+		for _, server := range loadBalancer.allServers {
+			fmt.Println("Kick up health check for ", server.Url)
+			go loadBalancer.doHealthCheck(server)
+		}
 	}
+
 	return loadBalancer
 }
 
@@ -79,11 +95,10 @@ func (b *LoadBalancer) doHealthCheck(server *Server) {
 	}
 
 	for {
-		// Run the check once in 2 seconds
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Millisecond * time.Duration(b.healthCheck.IntervalMs))
 
 		client := http.DefaultClient
-		response, err := client.Get(server.Url + "/health")
+		response, err := client.Get(server.Url + b.healthCheck.Path)
 		if err != nil {
 			fmt.Println("Health check failed for", server.Url)
 			server.isHealthy = false
