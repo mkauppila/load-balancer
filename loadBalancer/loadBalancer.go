@@ -22,14 +22,7 @@ type HealthCheck struct {
 }
 
 type LoadBalancer struct {
-	allServers []*Server
-	// The healthyServers is access from 2 goroutines atm. Unsafe?
-	// Strategy shouldn't know about the goroutines,
-	// LoadBalancer is accessing it from multiple goroutines and should
-	// lock and unlock when neededj
-
-	// Actually this should rather be a RWMutex
-	// NextServer  chan *Server
+	allServers  []*Server
 	healthCheck HealthCheck
 	strategy    Strategy
 }
@@ -73,19 +66,8 @@ func NewLoadBalancer(conf configuration.Configuration) LoadBalancer {
 	return loadBalancer
 }
 
-// // RENAME the stream is neot needed
-// // the whole function is not needed anymore
-// func (b *LoadBalancer) nextServerStream() {
-// 	for {
-// 		// will fail with zero servers, ie servers == []
-// 		b.NextServer <- b.strategy.getNextServer()
-// 	}
-// }
-
 func (b *LoadBalancer) doHealthCheck(server *Server) {
 	for {
-		time.Sleep(time.Millisecond * time.Duration(b.healthCheck.IntervalMs))
-
 		client := http.DefaultClient
 		response, err := client.Get(server.Url + b.healthCheck.Path)
 		if err != nil {
@@ -101,6 +83,8 @@ func (b *LoadBalancer) doHealthCheck(server *Server) {
 					" wrong response status ", response.StatusCode)
 			}
 		}
+
+		time.Sleep(time.Millisecond * time.Duration(b.healthCheck.IntervalMs))
 	}
 }
 
@@ -108,6 +92,7 @@ func (b *LoadBalancer) ForwardRequest(w http.ResponseWriter, r *http.Request) {
 	server, err := b.strategy.getNextServer()
 	if err != nil {
 		fmt.Println("Error: ", err)
+		// TODO: close the request
 		return
 	}
 	fmt.Println("server: ", server)

@@ -5,7 +5,6 @@ package main
 
 // TODO maybe?
 // - this could support HTTPS and break it before sending the request as plain HTTP to the target
-// - add config options health checks to enable and set the interval
 // - add different load balancing methods, weighted, least connections, ip_hash, some other hash etc..
 
 import (
