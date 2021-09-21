@@ -90,6 +90,13 @@ func parseServer(line string) Server {
 
 func parseStrategy(line string) Strategy {
 	splittedLine := strings.Split(line, " ")
-	// TODO handle the invalid strategy
-	return Strategy(splittedLine[1])
+	switch Strategy(splittedLine[1]) {
+	case random:
+		return random
+	case roundRobin:
+		return roundRobin
+	default:
+		// TODO handle this properly and return a parse error
+		return "error"
+	}
 }
