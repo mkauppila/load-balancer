@@ -51,7 +51,14 @@ func NewLoadBalancer(conf configuration.Configuration) LoadBalancer {
 		},
 	}
 
-	loadBalancer.strategy = CreateRoundRobin(servers)
+	switch conf.Strategy {
+	case "random":
+		loadBalancer.strategy = CreateRandom(servers)
+	case "round-robin":
+		loadBalancer.strategy = CreateRoundRobin(servers)
+	default:
+		panic("Unknown load balancing strategy")
+	}
 
 	// wont this goroutine dangle if the context is deleted?
 	// go loadBalancer.nextServerStream()

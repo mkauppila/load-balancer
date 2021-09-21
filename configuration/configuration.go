@@ -19,9 +19,17 @@ type Server struct {
 	Url string
 }
 
+type Strategy string
+
+const (
+	random     Strategy = "random"
+	roundRobin Strategy = "round-robin"
+)
+
 type Configuration struct {
-	HealthCheck HealthCheck
-	Servers     []Server
+	Servers []Server
+	HealthCheck
+	Strategy
 }
 
 func ParseConfiguration(contents []byte) (conf Configuration, err error) {
@@ -40,9 +48,12 @@ func ParseConfiguration(contents []byte) (conf Configuration, err error) {
 		} else if strings.HasPrefix(line, "server") {
 			server := parseServer(line)
 			conf.Servers = append(conf.Servers, server)
-		} else {
-			// unknown, skip or fail?
+		} else if strings.HasPrefix(line, "strategy") {
+			conf.Strategy = parseStrategy(line)
 		}
+		// else {
+		// 	// unknown, skip or fail?
+		// }
 	}
 	return conf, nil
 }
@@ -75,4 +86,10 @@ func parseHealthCheck(line string) (hc HealthCheck, err error) {
 func parseServer(line string) Server {
 	splittedLine := strings.Split(line, " ")
 	return Server{Url: splittedLine[1]}
+}
+
+func parseStrategy(line string) Strategy {
+	splittedLine := strings.Split(line, " ")
+	// TODO handle the invalid strategy
+	return Strategy(splittedLine[1])
 }
