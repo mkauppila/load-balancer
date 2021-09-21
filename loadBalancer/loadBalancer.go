@@ -53,9 +53,6 @@ func NewLoadBalancer(conf configuration.Configuration) LoadBalancer {
 		panic("Unknown load balancing strategy")
 	}
 
-	// wont this goroutine dangle if the context is deleted?
-	// go loadBalancer.nextServerStream()
-
 	if loadBalancer.healthCheck.Enabled {
 		for _, server := range loadBalancer.allServers {
 			fmt.Println("Kick up health check for ", server.Url)
