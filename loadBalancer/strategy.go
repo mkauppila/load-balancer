@@ -4,6 +4,7 @@ import (
 	"container/ring"
 	"fmt"
 	"math/rand"
+	"sync"
 )
 
 type Strategy interface {
@@ -11,6 +12,7 @@ type Strategy interface {
 }
 
 type RoundRobin struct {
+	mu      sync.Mutex
 	servers *ring.Ring
 }
 
@@ -26,12 +28,16 @@ func CreateRoundRobin(servers []*Server) *RoundRobin {
 }
 
 func (r *RoundRobin) getNextServer() (*Server, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	// would be nice to iterate the ring, pick the first alive server
+	// and move the head accordingly
 	retryCounter := r.servers.Len()
 	for {
 		r.servers = r.servers.Move(1)
 		server := r.servers.Value.(*Server)
 		if server.isHealthy {
-			fmt.Println("this was chosen: ", server)
 			return server, nil
 		}
 
