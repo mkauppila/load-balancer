@@ -1,7 +1,6 @@
 package loadBalancer
 
 import (
-	"container/ring"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -25,29 +24,26 @@ type HealthCheck struct {
 type LoadBalancer struct {
 	allServers []*Server
 	// The healthyServers is access from 2 goroutines atm. Unsafe?
-	healthyServers *ring.Ring
+	// Strategy shouldn't know about the goroutines,
+	// LoadBalancer is accessing it from multiple goroutines and should
+	// lock and unlock when neededj
+
 	// Actually this should rather be a RWMutex
-	NextServer  chan *Server
+	// NextServer  chan *Server
 	healthCheck HealthCheck
+	strategy    Strategy
 }
 
 func NewLoadBalancer(conf configuration.Configuration) LoadBalancer {
-	fmt.Println("conf: ", conf)
-
 	var servers []*Server
-	r := ring.New(len(conf.Servers))
 	for i := 0; i < len(conf.Servers); i++ {
 		server := Server{Url: conf.Servers[i].Url, isHealthy: true}
-		r.Value = &server
 		servers = append(servers, &server)
-		r = r.Next()
 	}
-	fmt.Println(servers)
 
 	loadBalancer := LoadBalancer{
-		healthyServers: r,
-		NextServer:     make(chan *Server),
-		allServers:     servers,
+		// NextServer: make(chan *Server),
+		allServers: servers,
 		healthCheck: HealthCheck{
 			Enabled:    conf.HealthCheck.Enabled,
 			Path:       conf.HealthCheck.Path,
@@ -55,8 +51,10 @@ func NewLoadBalancer(conf configuration.Configuration) LoadBalancer {
 		},
 	}
 
+	loadBalancer.strategy = CreateRoundRobin(servers)
+
 	// wont this goroutine dangle if the context is deleted?
-	go loadBalancer.nextServerStream()
+	// go loadBalancer.nextServerStream()
 
 	if loadBalancer.healthCheck.Enabled {
 		for _, server := range loadBalancer.allServers {
@@ -68,32 +66,16 @@ func NewLoadBalancer(conf configuration.Configuration) LoadBalancer {
 	return loadBalancer
 }
 
-func (b *LoadBalancer) nextServerStream() {
-	for {
-		// will fail with zero servers, ie servers == []
-		b.NextServer <- b.getNextServer()
-	}
-}
-
-func (b *LoadBalancer) getNextServer() *Server {
-	b.healthyServers = b.healthyServers.Move(1)
-	return b.healthyServers.Value.(*Server)
-}
+// // RENAME the stream is neot needed
+// // the whole function is not needed anymore
+// func (b *LoadBalancer) nextServerStream() {
+// 	for {
+// 		// will fail with zero servers, ie servers == []
+// 		b.NextServer <- b.strategy.getNextServer()
+// 	}
+// }
 
 func (b *LoadBalancer) doHealthCheck(server *Server) {
-	removeUnhealthy := func(server *Server) {
-		ring := b.healthyServers
-		for len := 0; len < b.healthyServers.Len(); len++ {
-			if ring.Value.(*Server).Url == server.Url {
-				ring.Unlink(1)
-
-				break
-			}
-
-			ring = ring.Move(1)
-		}
-	}
-
 	for {
 		time.Sleep(time.Millisecond * time.Duration(b.healthCheck.IntervalMs))
 
@@ -102,7 +84,6 @@ func (b *LoadBalancer) doHealthCheck(server *Server) {
 		if err != nil {
 			fmt.Println("Health check failed for", server.Url)
 			server.isHealthy = false
-			removeUnhealthy(server)
 		} else {
 			if response.StatusCode == http.StatusOK {
 				fmt.Println("Health check OK for ", server.Url)
@@ -111,14 +92,17 @@ func (b *LoadBalancer) doHealthCheck(server *Server) {
 				server.isHealthy = false
 				fmt.Println("Health check failed for", server.Url,
 					" wrong response status ", response.StatusCode)
-				removeUnhealthy(server)
 			}
 		}
 	}
 }
 
 func (b *LoadBalancer) ForwardRequest(w http.ResponseWriter, r *http.Request) {
-	server := <-b.NextServer
+	server, err := b.strategy.getNextServer()
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
 	fmt.Println("server: ", server)
 
 	req, _ := http.NewRequest(r.Method, server.Url, nil)
