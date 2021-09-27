@@ -49,7 +49,8 @@ func NewLoadBalancer(conf configuration.Configuration) LoadBalancer {
 	case "round-robin":
 		loadBalancer.strategy = CreateRoundRobin(servers)
 	default:
-		panic("Unknown load balancing strategy")
+		fmt.Println("Invalid load balancing strategy. Defaulting to round robin.")
+		loadBalancer.strategy = CreateRoundRobin(servers)
 	}
 
 	if loadBalancer.healthCheck.Enabled {
