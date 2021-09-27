@@ -2,8 +2,7 @@ package loadBalancer
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
+	"io"
 	"net/http"
 	"time"
 
@@ -89,27 +88,29 @@ func (b *LoadBalancer) ForwardRequest(w http.ResponseWriter, r *http.Request) {
 	server, err := b.strategy.getNextServer()
 	if err != nil {
 		fmt.Println("Error: ", err)
-		// TODO: close the request
 		return
 	}
-	fmt.Println("server: ", server)
 
-	req, _ := http.NewRequest(r.Method, server.Url, nil)
+	req, err := http.NewRequestWithContext(r.Context(), r.Method, server.Url, r.Body)
+	if err != nil {
+		fmt.Println("Invalid HTTP request: ", err)
+		return
+	}
+
 	req.Header = r.Header
 	req.Header.Add("X-Forwarded-For", r.RemoteAddr)
-	// Add rest of the custom headers
-	req.Body = r.Body
+	// TODO: Add rest of the custom headers
 
-	// TODO: handle connection refused error gracefully
 	client := http.DefaultClient
 	response, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err.Error())
-		log.Fatal("Error with request")
+		fmt.Println("Error: ", err)
+		w.WriteHeader(http.StatusBadGateway)
+		w.Header().Add("Content-Type", "application/text")
+		w.Write([]byte(err.Error()))
+		return
 	}
-	defer response.Body.Close()
 
-	body, _ := ioutil.ReadAll(response.Body)
-	fmt.Printf("Got response back \nres: %s\n", body)
-	w.Write(body)
+	defer response.Body.Close()
+	io.Copy(w, response.Body)
 }
