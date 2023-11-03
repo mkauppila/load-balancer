@@ -8,16 +8,16 @@ package main
 // - add different load balancing methods, weighted, least connections, ip_hash, some other hash etc..
 
 import (
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/mkauppila/load-balancer/configuration"
 	"github.com/mkauppila/load-balancer/loadBalancer"
 )
 
 func main() {
-	contents, err := ioutil.ReadFile("lb.conf")
+	contents, err := os.ReadFile("lb.conf")
 	if err != nil {
 		panic("no configuration file exists")
 	}
@@ -27,11 +27,11 @@ func main() {
 		log.Fatalln("Failed to parse configuration. Error: ", err)
 	}
 
-	loadBalancer := loadBalancer.NewLoadBalancer(conf)
+	srv := loadBalancer.NewLoadBalancer(conf)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		loadBalancer.ForwardRequest(w, r)
+		srv.ForwardRequest(w, r)
 	})
-	// AP: what is DefaultServeMux?
+
 	log.Fatal(http.ListenAndServe("localhost:4000", nil))
 }

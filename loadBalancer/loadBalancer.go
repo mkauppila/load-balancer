@@ -108,10 +108,25 @@ func (b *LoadBalancer) ForwardRequest(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Error: ", err)
 		w.WriteHeader(http.StatusBadGateway)
 		w.Header().Add("Content-Type", "application/text")
-		w.Write([]byte(err.Error()))
+		data := []byte(err.Error())
+		b, err := w.Write(data)
+		if err != nil || b != len(data) {
+			return
+		}
 		return
 	}
 
-	defer response.Body.Close()
-	io.Copy(w, response.Body)
+	_, err = io.Copy(w, response.Body)
+	if err != nil {
+		err := response.Body.Close()
+		if err != nil {
+			return
+		}
+		return
+	}
+
+	err = response.Body.Close()
+	if err != nil {
+		return
+	}
 }

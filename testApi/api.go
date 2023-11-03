@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -13,7 +13,8 @@ func logRequestDetails(r *http.Request) {
 	for name, values := range r.Header {
 		fmt.Println(name, values)
 	}
-	body, _ := ioutil.ReadAll(r.Body)
+
+	body, _ := io.ReadAll(r.Body)
 	fmt.Println("body: ", string(body))
 }
 
