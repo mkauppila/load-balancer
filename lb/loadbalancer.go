@@ -126,8 +126,7 @@ func (b *LoadBalancer) Start(ctx context.Context) context.CancelFunc {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", b.ForwardRequest)
 
-	ctx, cancel := context.WithCancel(ctx)
-
+	_, cancel := context.WithCancel(ctx)
 	go func() {
 		// TODO: Allow changing the addr
 		err := http.ListenAndServe("localhost:4000", mux)

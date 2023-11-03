@@ -12,16 +12,16 @@ import (
 
 func page(w http.ResponseWriter, r *http.Request) {
 	logRequestDetails(r)
-	fmt.Fprintf(w, "Hello from %d", os.Getpid())
+	_, _ = fmt.Fprintf(w, "Hello from %d", os.Getpid())
 }
 
-func RunServer(started context.CancelFunc, serverCtx context.Context, confUrl string) {
+func RunServer(started context.CancelFunc, ctx context.Context, confUrl string) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", page)
 
 	addr, _ := url.Parse(confUrl)
 	fmt.Printf("Starting on addr: %s:%s\n", addr.Hostname(), addr.Port())
-	serverCtx, cancel := context.WithCancel(serverCtx)
+	_, cancel := context.WithCancel(ctx)
 	go func() {
 		l, err := net.Listen("tcp", fmt.Sprintf("%s:%s", addr.Hostname(), addr.Port()))
 		if err != nil {

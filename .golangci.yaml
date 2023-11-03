@@ -1,0 +1,6 @@
+run: 
+  concurrency: 16
+  # allow-parallel-runners: true
+linters:
+  disable:
+
