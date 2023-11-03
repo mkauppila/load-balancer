@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/mkauppila/load-balancer/config"
-	"github.com/mkauppila/load-balancer/lb"
+	"github.com/mkauppila/load-balancer/loadbalancer"
 	"github.com/mkauppila/load-balancer/test/httpserver"
 	"github.com/mkauppila/load-balancer/types"
 )
@@ -47,7 +47,7 @@ func TestSomething(t *testing.T) {
 	wg.Wait()
 	fmt.Println("Target HTTP servers are up and ready")
 
-	srv := lb.NewLoadBalancer(cfg)
+	srv := loadbalancer.NewLoadBalancer(cfg)
 	cancel := srv.Start(ctx)
 	request, _ := http.NewRequest(http.MethodGet, url+"/", nil)
 	// TODO: check for no error

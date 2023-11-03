@@ -15,7 +15,7 @@ import (
 	"syscall"
 
 	"github.com/mkauppila/load-balancer/config"
-	"github.com/mkauppila/load-balancer/lb"
+	"github.com/mkauppila/load-balancer/loadbalancer"
 )
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
 }
 
 func run(args []string) {
-	contents, err := os.ReadFile("lb.conf")
+	contents, err := os.ReadFile("loadbalancer.conf")
 	if err != nil {
 		panic("no config file exists")
 	}
@@ -33,7 +33,7 @@ func run(args []string) {
 		log.Fatalln("Failed to parse config. Error: ", err)
 	}
 
-	srv := lb.NewLoadBalancer(conf)
+	srv := loadbalancer.NewLoadBalancer(conf)
 
 	ctx, _ := signal.NotifyContext(
 		context.Background(),
