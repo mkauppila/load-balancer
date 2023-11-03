@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,19 +15,27 @@ func page(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello from %d", os.Getpid())
 }
 
-func RunServer(ctx context.Context, confUrl string) {
+func RunServer(started context.CancelFunc, serverCtx context.Context, confUrl string) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", page)
 
 	addr, _ := url.Parse(confUrl)
 	fmt.Printf("Starting on addr: %s:%s\n", addr.Hostname(), addr.Port())
-	ctx, cancel := context.WithCancel(ctx)
+	serverCtx, cancel := context.WithCancel(serverCtx)
 	go func() {
-		err := http.ListenAndServe(fmt.Sprintf("%s:%s", addr.Hostname(), addr.Port()), mux)
+		l, err := net.Listen("tcp", fmt.Sprintf("%s:%s", addr.Hostname(), addr.Port()))
 		if err != nil {
-			cancel()
-			return
+			panic(err)
 		}
+
+		started()
+
+		go func() {
+			err = http.Serve(l, mux)
+			if err != nil {
+				cancel()
+			}
+		}()
 	}()
 }
 

@@ -2,10 +2,11 @@ package test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
-	"time"
 
 	"github.com/mkauppila/load-balancer/config"
 	"github.com/mkauppila/load-balancer/lb"
@@ -31,9 +32,19 @@ func TestSomething(t *testing.T) {
 		Strategy: "round-robin",
 	}
 
-	httpserver.RunServer(ctx, cfg.Servers[0].Url)
-
-	time.Sleep(1 * time.Second)
+	fmt.Println("Setting up the target HTTP servers...")
+	var wg sync.WaitGroup
+	for _, server := range cfg.Servers {
+		wg.Add(1)
+		go func(server config.Server) {
+			defer wg.Done()
+			readyCtx, cancel := context.WithCancel(context.Background())
+			httpserver.RunServer(cancel, ctx, server.Url)
+			<-readyCtx.Done()
+		}(server)
+	}
+	wg.Wait()
+	fmt.Println("Target HTTP servers are up and ready")
 
 	srv := lb.NewLoadBalancer(cfg)
 	cancel := srv.Start(ctx)
@@ -46,8 +57,6 @@ func TestSomething(t *testing.T) {
 	if got != 200 {
 		t.Errorf("The request was not success. Got %d", response.Code)
 	}
-
-	time.Sleep(1 * time.Second)
 
 	cancel()
 }
