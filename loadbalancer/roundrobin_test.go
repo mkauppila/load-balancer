@@ -7,7 +7,7 @@ import (
 	"github.com/mkauppila/load-balancer/types"
 )
 
-func TestGettingServerRoundRobin(t *testing.T) {
+func TestRoundRobin(t *testing.T) {
 	servers := []*types.Server{
 		{Url: "url", IsHealthy: true},
 		{Url: "url2", IsHealthy: true},
