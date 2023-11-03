@@ -1,5 +1,7 @@
 package lb
 
+import "github.com/mkauppila/load-balancer/types"
+
 type Strategy interface {
-	getNextServer() (*Server, error)
+	getNextServer() (*types.Server, error)
 }

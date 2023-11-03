@@ -4,32 +4,14 @@ import (
 	"errors"
 	"strconv"
 	"strings"
-)
 
-// parse config separately and
-// and create LoadBalancer out of it
-// Rename Context to LoadBalancer
-type HealthCheck struct {
-	Enabled    bool
-	IntervalMs int
-	Path       string
-}
-
-type Server struct {
-	Url string
-}
-
-type Strategy string
-
-const (
-	random     Strategy = "random"
-	roundRobin Strategy = "round-robin"
+	"github.com/mkauppila/load-balancer/types"
 )
 
 type Configuration struct {
-	Servers []Server
-	HealthCheck
-	Strategy
+	Servers []types.Server
+	types.HealthCheck
+	types.Strategy
 }
 
 func ParseConfiguration(contents []byte) (conf Configuration, err error) {
@@ -58,9 +40,9 @@ func ParseConfiguration(contents []byte) (conf Configuration, err error) {
 	return conf, nil
 }
 
-func parseHealthCheck(line string) (hc HealthCheck, err error) {
-	splittedLine := strings.Split(line, " ")
-	for index, item := range splittedLine {
+func parseHealthCheck(line string) (hc types.HealthCheck, err error) {
+	parts := strings.Split(line, " ")
+	for index, item := range parts {
 		switch index {
 		case 1:
 			if item == "on" {
@@ -83,18 +65,18 @@ func parseHealthCheck(line string) (hc HealthCheck, err error) {
 	return hc, nil
 }
 
-func parseServer(line string) Server {
-	splittedLine := strings.Split(line, " ")
-	return Server{Url: splittedLine[1]}
+func parseServer(line string) types.Server {
+	parts := strings.Split(line, " ")
+	return types.Server{Url: parts[1]}
 }
 
-func parseStrategy(line string) Strategy {
-	splittedLine := strings.Split(line, " ")
-	switch Strategy(splittedLine[1]) {
-	case random:
-		return random
-	case roundRobin:
-		return roundRobin
+func parseStrategy(line string) types.Strategy {
+	parts := strings.Split(line, " ")
+	switch types.Strategy(parts[1]) {
+	case types.Random:
+		return types.Random
+	case types.RoundRobin:
+		return types.RoundRobin
 	default:
 		// TODO handle this properly and return a parse error
 		return "error"

@@ -30,12 +30,10 @@ func RunServer(started context.CancelFunc, serverCtx context.Context, confUrl st
 
 		started()
 
-		go func() {
-			err = http.Serve(l, mux)
-			if err != nil {
-				cancel()
-			}
-		}()
+		err = http.Serve(l, mux)
+		if err != nil {
+			cancel()
+		}
 	}()
 }
 

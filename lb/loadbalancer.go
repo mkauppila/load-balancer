@@ -9,35 +9,25 @@ import (
 	"time"
 
 	"github.com/mkauppila/load-balancer/config"
+	"github.com/mkauppila/load-balancer/types"
 )
 
-type Server struct {
-	Url       string
-	isHealthy bool
-}
-
-type HealthCheck struct {
-	Enabled    bool
-	Path       string
-	IntervalMs int
-}
-
 type LoadBalancer struct {
-	allServers  []*Server
-	healthCheck HealthCheck
+	allServers  []*types.Server
+	healthCheck types.HealthCheck
 	strategy    Strategy
 }
 
 func NewLoadBalancer(conf config.Configuration) LoadBalancer {
-	var servers []*Server
+	var servers []*types.Server
 	for i := 0; i < len(conf.Servers); i++ {
-		server := Server{Url: conf.Servers[i].Url, isHealthy: true}
+		server := types.Server{Url: conf.Servers[i].Url, IsHealthy: true}
 		servers = append(servers, &server)
 	}
 
 	loadBalancer := LoadBalancer{
 		allServers: servers,
-		healthCheck: HealthCheck{
+		healthCheck: types.HealthCheck{
 			Enabled:    conf.HealthCheck.Enabled,
 			Path:       conf.HealthCheck.Path,
 			IntervalMs: conf.HealthCheck.IntervalMs,
@@ -64,19 +54,19 @@ func NewLoadBalancer(conf config.Configuration) LoadBalancer {
 	return loadBalancer
 }
 
-func (b *LoadBalancer) doHealthCheck(server *Server) {
+func (b *LoadBalancer) doHealthCheck(server *types.Server) {
 	for {
 		client := http.DefaultClient
 		response, err := client.Get(server.Url + b.healthCheck.Path)
 		if err != nil {
 			fmt.Println("Health check failed for", server.Url)
-			server.isHealthy = false
+			server.IsHealthy = false
 		} else {
 			if response.StatusCode == http.StatusOK {
 				fmt.Println("Health check OK for ", server.Url)
-				server.isHealthy = true
+				server.IsHealthy = true
 			} else {
-				server.isHealthy = false
+				server.IsHealthy = false
 				fmt.Println("Health check failed for", server.Url,
 					" wrong response status ", response.StatusCode)
 			}

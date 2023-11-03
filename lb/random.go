@@ -3,20 +3,22 @@ package lb
 import (
 	"fmt"
 	"math/rand"
+
+	"github.com/mkauppila/load-balancer/types"
 )
 
 type Random struct {
-	servers []*Server
+	servers []*types.Server
 }
 
-func CreateRandom(servers []*Server) *Random {
+func CreateRandom(servers []*types.Server) *Random {
 	return &Random{servers}
 }
 
-func (r *Random) getNextServer() (*Server, error) {
-	var aliveServers []*Server
+func (r *Random) getNextServer() (*types.Server, error) {
+	var aliveServers []*types.Server
 	for _, server := range r.servers {
-		if server.isHealthy {
+		if server.IsHealthy {
 			aliveServers = append(aliveServers, server)
 		}
 	}

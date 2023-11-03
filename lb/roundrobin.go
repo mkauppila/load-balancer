@@ -4,6 +4,8 @@ import (
 	"container/ring"
 	"fmt"
 	"sync"
+
+	"github.com/mkauppila/load-balancer/types"
 )
 
 type RoundRobin struct {
@@ -11,7 +13,7 @@ type RoundRobin struct {
 	servers *ring.Ring
 }
 
-func CreateRoundRobin(servers []*Server) *RoundRobin {
+func CreateRoundRobin(servers []*types.Server) *RoundRobin {
 	r := ring.New(len(servers))
 	for _, s := range servers {
 		r.Value = s
@@ -22,7 +24,7 @@ func CreateRoundRobin(servers []*Server) *RoundRobin {
 	return &rr
 }
 
-func (r *RoundRobin) getNextServer() (*Server, error) {
+func (r *RoundRobin) getNextServer() (*types.Server, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -31,8 +33,8 @@ func (r *RoundRobin) getNextServer() (*Server, error) {
 	retryCounter := r.servers.Len()
 	for {
 		r.servers = r.servers.Move(1)
-		server := r.servers.Value.(*Server)
-		if server.isHealthy {
+		server := r.servers.Value.(*types.Server)
+		if server.IsHealthy {
 			return server, nil
 		}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/mkauppila/load-balancer/config"
 	"github.com/mkauppila/load-balancer/lb"
 	"github.com/mkauppila/load-balancer/test/httpserver"
+	"github.com/mkauppila/load-balancer/types"
 )
 
 func TestSomething(t *testing.T) {
@@ -19,12 +20,12 @@ func TestSomething(t *testing.T) {
 	url := "http://localhost:50000"
 
 	cfg := config.Configuration{
-		Servers: []config.Server{
+		Servers: []types.Server{
 			{
 				Url: url,
 			},
 		},
-		HealthCheck: config.HealthCheck{
+		HealthCheck: types.HealthCheck{
 			Enabled:    false,
 			IntervalMs: 10,
 			Path:       "/health",
@@ -36,7 +37,7 @@ func TestSomething(t *testing.T) {
 	var wg sync.WaitGroup
 	for _, server := range cfg.Servers {
 		wg.Add(1)
-		go func(server config.Server) {
+		go func(server types.Server) {
 			defer wg.Done()
 			readyCtx, cancel := context.WithCancel(context.Background())
 			httpserver.RunServer(cancel, ctx, server.Url)
