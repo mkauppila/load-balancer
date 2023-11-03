@@ -34,7 +34,6 @@ func NewLoadBalancer(conf config.Configuration) LoadBalancer {
 	}
 
 	loadBalancer := LoadBalancer{
-		// NextServer: make(chan *Server),
 		allServers: servers,
 		healthCheck: HealthCheck{
 			Enabled:    conf.HealthCheck.Enabled,
