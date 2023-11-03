@@ -1,4 +1,4 @@
-package configuration
+package config
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// parse configuration separately and
+// parse config separately and
 // and create LoadBalancer out of it
 // Rename Context to LoadBalancer
 type HealthCheck struct {

@@ -12,19 +12,19 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/mkauppila/load-balancer/configuration"
+	"github.com/mkauppila/load-balancer/config"
 	"github.com/mkauppila/load-balancer/loadBalancer"
 )
 
 func main() {
 	contents, err := os.ReadFile("lb.conf")
 	if err != nil {
-		panic("no configuration file exists")
+		panic("no config file exists")
 	}
 
-	conf, err := configuration.ParseConfiguration(contents)
+	conf, err := config.ParseConfiguration(contents)
 	if err != nil {
-		log.Fatalln("Failed to parse configuration. Error: ", err)
+		log.Fatalln("Failed to parse config. Error: ", err)
 	}
 
 	srv := loadBalancer.NewLoadBalancer(conf)

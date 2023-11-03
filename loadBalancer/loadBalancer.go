@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mkauppila/load-balancer/configuration"
+	"github.com/mkauppila/load-balancer/config"
 )
 
 type Server struct {
@@ -26,7 +26,7 @@ type LoadBalancer struct {
 	strategy    Strategy
 }
 
-func NewLoadBalancer(conf configuration.Configuration) LoadBalancer {
+func NewLoadBalancer(conf config.Configuration) LoadBalancer {
 	var servers []*Server
 	for i := 0; i < len(conf.Servers); i++ {
 		server := Server{Url: conf.Servers[i].Url, isHealthy: true}
