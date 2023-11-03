@@ -1,8 +1,10 @@
 package lb
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"time"
 
@@ -128,4 +130,22 @@ func (b *LoadBalancer) ForwardRequest(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+}
+
+func (b *LoadBalancer) Start(ctx context.Context) context.CancelFunc {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		b.ForwardRequest(w, r)
+	})
+
+	ctx, cancel := context.WithCancel(ctx)
+
+	go func() {
+		err := http.ListenAndServe("localhost:4000", nil)
+		if err != nil {
+			log.Println(err)
+			cancel()
+			return
+		}
+	}()
+	return cancel
 }

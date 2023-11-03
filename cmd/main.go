@@ -10,7 +10,6 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -36,27 +35,15 @@ func run(args []string) {
 
 	srv := lb.NewLoadBalancer(conf)
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		srv.ForwardRequest(w, r)
-	})
-
-	ctx := context.Background()
-	ctx, stopFn := signal.NotifyContext(
-		ctx,
+	ctx, _ := signal.NotifyContext(
+		context.Background(),
 		syscall.SIGINT,
 		syscall.SIGKILL,
 		syscall.SIGABRT,
 		syscall.SIGTERM,
 	)
 
-	go func() {
-		err := http.ListenAndServe("localhost:4000", nil)
-		if err != nil {
-			log.Println(err)
-			stopFn()
-			return
-		}
-	}()
+	_ = srv.Start(ctx)
 
 	<-ctx.Done()
 }
