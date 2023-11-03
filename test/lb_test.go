@@ -5,13 +5,18 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/mkauppila/load-balancer/config"
 	"github.com/mkauppila/load-balancer/lb"
+	"github.com/mkauppila/load-balancer/test/httpserver"
 )
 
 func TestSomething(t *testing.T) {
+	ctx := context.Background()
+
 	url := "http://localhost:50000"
+
 	cfg := config.Configuration{
 		Servers: []config.Server{
 			{
@@ -19,17 +24,20 @@ func TestSomething(t *testing.T) {
 			},
 		},
 		HealthCheck: config.HealthCheck{
-			Enabled:    true,
+			Enabled:    false,
 			IntervalMs: 10,
 			Path:       "/health",
 		},
 		Strategy: "round-robin",
 	}
 
-	srv := lb.NewLoadBalancer(cfg)
-	cancel := srv.Start(context.Background())
+	httpserver.RunServer(ctx, cfg.Servers[0].Url)
 
-	request, _ := http.NewRequest(http.MethodGet, url, nil)
+	time.Sleep(1 * time.Second)
+
+	srv := lb.NewLoadBalancer(cfg)
+	cancel := srv.Start(ctx)
+	request, _ := http.NewRequest(http.MethodGet, url+"/", nil)
 	// TODO: check for no error
 	response := httptest.NewRecorder()
 
@@ -38,6 +46,8 @@ func TestSomething(t *testing.T) {
 	if got != 200 {
 		t.Errorf("The request was not success. Got %d", response.Code)
 	}
+
+	time.Sleep(1 * time.Second)
 
 	cancel()
 }
