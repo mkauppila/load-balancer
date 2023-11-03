@@ -13,7 +13,7 @@ import (
 	"os"
 
 	"github.com/mkauppila/load-balancer/config"
-	"github.com/mkauppila/load-balancer/loadBalancer"
+	"github.com/mkauppila/load-balancer/lb"
 )
 
 func main() {
@@ -27,7 +27,7 @@ func main() {
 		log.Fatalln("Failed to parse config. Error: ", err)
 	}
 
-	srv := loadBalancer.NewLoadBalancer(conf)
+	srv := lb.NewLoadBalancer(conf)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		srv.ForwardRequest(w, r)

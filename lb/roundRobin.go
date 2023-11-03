@@ -1,4 +1,4 @@
-package loadBalancer
+package lb
 
 import (
 	"container/ring"
