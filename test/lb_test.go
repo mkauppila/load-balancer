@@ -14,24 +14,24 @@ import (
 	"github.com/mkauppila/load-balancer/types"
 )
 
-func TestSomething(t *testing.T) {
+func TestLoadBalancerRoundRobin(t *testing.T) {
 	ctx := context.Background()
 
-	url := "http://localhost:50000"
+	httpServerBasePort := 50_000
 
-	cfg := config.Configuration{
-		Servers: []types.Server{
-			{
-				Url: url,
-			},
-		},
-		HealthCheck: types.HealthCheck{
-			Enabled:    false,
-			IntervalMs: 10,
-			Path:       "/health",
-		},
-		Strategy: "round-robin",
+	cfg := config.Configuration{}
+	for c := 0; c < 3; c++ {
+		cfg.Servers = append(cfg.Servers, types.Server{
+			Url: fmt.Sprintf("http://localhost:%d", httpServerBasePort+c),
+		})
 	}
+	cfg.HealthCheck = types.HealthCheck{
+		Enabled:    false,
+		IntervalMs: 10,
+		Path:       "/health",
+	}
+	cfg.Strategy = types.RoundRobin
+	cfg.Port = 40_000
 
 	fmt.Println("Setting up the target HTTP servers...")
 	var wg sync.WaitGroup
@@ -49,7 +49,9 @@ func TestSomething(t *testing.T) {
 
 	srv := loadbalancer.NewLoadBalancer(cfg)
 	cancel := srv.Start(ctx)
-	request, _ := http.NewRequest(http.MethodGet, url+"/", nil)
+	// TODO Why does this need to start with http://
+	lbAddr := fmt.Sprintf("http://localhost:%d", cfg.Port)
+	request, _ := http.NewRequest(http.MethodGet, lbAddr, nil)
 	// TODO: check for no error
 	response := httptest.NewRecorder()
 
