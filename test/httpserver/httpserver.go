@@ -7,17 +7,18 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 )
 
-func page(w http.ResponseWriter, r *http.Request) {
-	logRequestDetails(r)
-	_, _ = fmt.Fprintf(w, "Hello from %d", os.Getpid())
+func page(w http.ResponseWriter, r *http.Request, response string) {
+	//logRequestDetails(r)
+	_, _ = fmt.Fprintf(w, response)
 }
 
-func RunServer(started context.CancelFunc, ctx context.Context, confUrl string) {
+func RunServer(started context.CancelFunc, ctx context.Context, confUrl string, response string) {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", page)
+	mux.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		page(writer, request, response)
+	})
 
 	addr, _ := url.Parse(confUrl)
 	fmt.Printf("Starting on addr: %s:%s\n", addr.Hostname(), addr.Port())

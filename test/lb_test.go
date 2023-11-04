@@ -35,14 +35,16 @@ func TestLoadBalancerRoundRobin(t *testing.T) {
 
 	fmt.Println("Setting up the target HTTP servers...")
 	var wg sync.WaitGroup
-	for _, server := range cfg.Servers {
+	for i, server := range cfg.Servers {
 		wg.Add(1)
-		go func(server types.Server) {
+		response := fmt.Sprintf("response %d", i)
+		t.Log("gen response ", response)
+		go func(server types.Server, response string) {
 			defer wg.Done()
 			readyCtx, cancel := context.WithCancel(context.Background())
-			httpserver.RunServer(cancel, ctx, server.Url)
+			httpserver.RunServer(cancel, ctx, server.Url, response)
 			<-readyCtx.Done()
-		}(server)
+		}(server, response)
 	}
 	wg.Wait()
 	fmt.Println("Target HTTP servers are up and ready")
