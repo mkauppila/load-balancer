@@ -1,0 +1,15 @@
+FROM golang:1.21.3-alpine3.18 AS build
+
+WORKDIR /usr/src/app
+COPY go.mod ./
+COPY conf/lb.conf ./conf/lb.conf
+COPY config/ ./config
+COPY types/ ./types
+COPY loadbalancer/ ./loadbalancer
+COPY cmd/loadbalancer/main.go ./cmd/loadbalancer/main.go
+RUN go build -o lb cmd/loadbalancer/main.go
+
+FROM alpine:3.18.0 AS final
+COPY --from=build /usr/src/app/lb .
+# COPY --from=build /usr/src/app/lb.conf .
+ENTRYPOINT [ "./lb" ]

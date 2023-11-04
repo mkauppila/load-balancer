@@ -1,0 +1,11 @@
+FROM golang:1.21.3-alpine3.18 AS build
+
+WORKDIR /usr/src/app
+COPY go.mod ./
+COPY httpserver/ ./httpserver
+COPY cmd/httpserver/main.go ./cmd/httpserver/main.go
+RUN go build -o server cmd/httpserver/main.go
+
+FROM alpine:3.18.0 AS final
+COPY --from=build /usr/src/app/server .
+ENTRYPOINT [ "./server" ]
