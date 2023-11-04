@@ -53,3 +53,10 @@ func TestParsingHealthCheckPath(t *testing.T) {
 		t.Error("Path not parsed properly. Actual ", hc.Path)
 	}
 }
+
+func TestParsePort(t *testing.T) {
+	port, _ := parsePort("listen 1447")
+	if port != 1447 {
+		t.Error("Port not parsed properly. Actual ", port)
+	}
+}

@@ -10,6 +10,7 @@ import (
 
 type Configuration struct {
 	Servers []types.Server
+	Port    int
 	types.HealthCheck
 	types.Strategy
 }
@@ -32,12 +33,22 @@ func ParseConfiguration(contents []byte) (conf Configuration, err error) {
 			conf.Servers = append(conf.Servers, server)
 		} else if strings.HasPrefix(line, "strategy") {
 			conf.Strategy = parseStrategy(line)
+		} else if strings.HasPrefix(line, "listen") {
+			conf.Port, err = parsePort(line)
+			if err != nil {
+				return conf, err
+			}
 		}
 		// else {
 		// 	// unknown, skip or fail?
 		// }
 	}
 	return conf, nil
+}
+
+func parsePort(line string) (int, error) {
+	parts := strings.Split(line, " ")
+	return strconv.Atoi(parts[1])
 }
 
 func parseHealthCheck(line string) (hc types.HealthCheck, err error) {

@@ -14,6 +14,7 @@ import (
 
 type LoadBalancer struct {
 	allServers  []*types.Server
+	port        int
 	healthCheck types.HealthCheck
 	strategy    Strategy
 }
@@ -32,6 +33,7 @@ func NewLoadBalancer(conf config.Configuration) LoadBalancer {
 			Path:       conf.HealthCheck.Path,
 			IntervalMs: conf.HealthCheck.IntervalMs,
 		},
+		port: conf.Port,
 	}
 
 	switch conf.Strategy {
@@ -52,6 +54,26 @@ func NewLoadBalancer(conf config.Configuration) LoadBalancer {
 	}
 
 	return loadBalancer
+}
+
+func (b *LoadBalancer) Start(ctx context.Context) context.CancelFunc {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", b.ForwardRequest)
+
+	_, cancel := context.WithCancel(ctx)
+	go func() {
+		// TODO: Allow changing the addr
+		addr := fmt.Sprintf("localhost:%d", b.port)
+		fmt.Println("Start listening on addr:", addr)
+		err := http.ListenAndServe(addr, mux)
+		if err != nil {
+			log.Println(err)
+			cancel()
+			return
+		}
+	}()
+
+	return cancel
 }
 
 func (b *LoadBalancer) doHealthCheck(server *types.Server) {
@@ -120,21 +142,4 @@ func (b *LoadBalancer) ForwardRequest(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-}
-
-func (b *LoadBalancer) Start(ctx context.Context) context.CancelFunc {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", b.ForwardRequest)
-
-	_, cancel := context.WithCancel(ctx)
-	go func() {
-		// TODO: Allow changing the addr
-		err := http.ListenAndServe("localhost:4000", mux)
-		if err != nil {
-			log.Println(err)
-			cancel()
-			return
-		}
-	}()
-	return cancel
 }
