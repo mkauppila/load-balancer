@@ -28,12 +28,10 @@ func (r *RoundRobin) nextHealthyServer() (*types.Server, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	// would be nice to iterate the ring, pick the first alive server
-	// and move the head accordingly
 	retryCounter := r.servers.Len()
 	for {
-		r.servers = r.servers.Move(1)
 		server := r.servers.Value.(*types.Server)
+		r.servers = r.servers.Move(1)
 		if server.IsHealthy {
 			return server, nil
 		}
