@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  httpserver-0:
+    image: httpserver
+    build:
+      context: .
+      dockerfile: httpserver.docker
+    expose:
+      - '50000'
+    ports:
+      - '50000:50000'
+    environment:
+      HTTP_PORT: 50000
+
+  httpserver-1:
+    image: httpserver
+    build:
+      context: .
+      dockerfile: httpserver.docker
+    expose:
+      - '50001'
+    ports:
+      - '50001:50001'
+    environment:
+      HTTP_PORT: 50001
+
+  httpserver-2:
+    image: httpserver
+    build:
+      context: .
+      dockerfile: httpserver.docker
+    expose:
+      - '50002'
+    ports:
+      - '50002:50002'
+    environment:
+      HTTP_PORT: 50002
+
+
+  loadbalancer:
+    image: loadbalancer
+    build:
+      context: .
+      dockerfile: loadbalancer.docker
+    command: 'conf/compose.conf'
+    ports:
+      - '4000:4000'
+    volumes:
+      - ./conf:/conf
