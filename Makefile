@@ -7,6 +7,10 @@ lint:
 .PHONY: lint
 
 run:
-		go run cmd/main.go
+		go run cmd/loadbalancer/main.go
 .PHONY: run
+
+httpserver:
+		go run cmd/httpserver/main.go
+.PHONY: httpserver
 
