@@ -23,7 +23,12 @@ func main() {
 }
 
 func run(args []string) {
-	contents, err := os.ReadFile("./conf/lb.conf")
+	confPath := "./conf/lb.conf"
+	if len(args) == 2 {
+		confPath = args[1]
+	}
+
+	contents, err := os.ReadFile(confPath)
 	if err != nil {
 		panic("no config file exists")
 	}
