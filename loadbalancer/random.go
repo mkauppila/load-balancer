@@ -15,7 +15,7 @@ func CreateRandom(servers []*types.Server) *Random {
 	return &Random{servers}
 }
 
-func (r *Random) getNextServer() (*types.Server, error) {
+func (r *Random) nextHealthyServer() (*types.Server, error) {
 	var aliveServers []*types.Server
 	for _, server := range r.servers {
 		if server.IsHealthy {

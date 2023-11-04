@@ -24,7 +24,7 @@ func CreateRoundRobin(servers []*types.Server) *RoundRobin {
 	return &rr
 }
 
-func (r *RoundRobin) getNextServer() (*types.Server, error) {
+func (r *RoundRobin) nextHealthyServer() (*types.Server, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

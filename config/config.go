@@ -84,10 +84,10 @@ func parseServer(line string) types.Server {
 func parseStrategy(line string) types.Strategy {
 	parts := strings.Split(line, " ")
 	switch types.Strategy(parts[1]) {
-	case types.Random:
-		return types.Random
-	case types.RoundRobin:
-		return types.RoundRobin
+	case types.StrategyRandom:
+		return types.StrategyRandom
+	case types.StrategyRoundRobin:
+		return types.StrategyRoundRobin
 	default:
 		// TODO handle this properly and return a parse error
 		return "error"

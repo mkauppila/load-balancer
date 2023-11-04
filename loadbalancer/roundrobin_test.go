@@ -1,7 +1,6 @@
 package loadbalancer
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/mkauppila/load-balancer/types"
@@ -15,13 +14,12 @@ func TestRoundRobin(t *testing.T) {
 	rr := CreateRoundRobin(servers)
 
 	servers[0].IsHealthy = false
-	s, _ := rr.getNextServer()
+	s, _ := rr.nextHealthyServer()
 	if s.Url != "url2" {
 		t.Errorf("Wrong server. Expected url2, actual %s", s.Url)
 	}
 
-	s, _ = rr.getNextServer()
-	fmt.Println("1: ", s)
+	s, _ = rr.nextHealthyServer()
 	if s.Url != "url2" {
 		t.Errorf("Wrong server. Expected url2, actual %s", s.Url)
 	}

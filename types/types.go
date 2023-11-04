@@ -14,6 +14,6 @@ type Server struct {
 type Strategy string
 
 const (
-	Random     Strategy = "random"
-	RoundRobin Strategy = "round-robin"
+	StrategyRandom     Strategy = "random"
+	StrategyRoundRobin Strategy = "round-robin"
 )

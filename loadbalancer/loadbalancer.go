@@ -99,7 +99,7 @@ func (b *LoadBalancer) doHealthCheck(server *types.Server) {
 }
 
 func (b *LoadBalancer) ForwardRequest(w http.ResponseWriter, r *http.Request) {
-	server, err := b.strategy.getNextServer()
+	server, err := b.strategy.nextHealthyServer()
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return

@@ -30,7 +30,7 @@ func TestLoadBalancerRoundRobin(t *testing.T) {
 		IntervalMs: 10,
 		Path:       "/health",
 	}
-	cfg.Strategy = types.RoundRobin
+	cfg.Strategy = types.StrategyRoundRobin
 	cfg.Port = 40_000
 
 	fmt.Println("Setting up the target HTTP servers...")
