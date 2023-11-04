@@ -49,18 +49,38 @@ func TestLoadBalancerRoundRobin(t *testing.T) {
 	wg.Wait()
 	fmt.Println("Target HTTP servers are up and ready")
 
+	expectedResponses := []string{
+		// First loop
+		"response 0",
+		"response 1",
+		"response 2",
+		// Second loop
+		"response 0",
+		"response 1",
+		"response 2",
+	}
+
 	srv := loadbalancer.NewLoadBalancer(cfg)
 	cancel := srv.Start(ctx)
-	// TODO Why does this need to start with http://
 	lbAddr := fmt.Sprintf("http://localhost:%d", cfg.Port)
-	request, _ := http.NewRequest(http.MethodGet, lbAddr, nil)
-	// TODO: check for no error
-	response := httptest.NewRecorder()
 
-	srv.ForwardRequest(response, request)
-	got := response.Code
-	if got != 200 {
-		t.Errorf("The request was not success. Got %d", response.Code)
+	for _, expectedResponse := range expectedResponses {
+		// TODO Why does this need to start with http://
+		request, err := http.NewRequest(http.MethodGet, lbAddr, nil)
+		if err != nil {
+			t.Errorf("Failed to create new HTTP request")
+		}
+		response := httptest.NewRecorder()
+
+		srv.ForwardRequest(response, request)
+		if response.Code != 200 {
+			t.Errorf("The request was not success. Got %d", response.Code)
+		}
+
+		actual := response.Body.String()
+		if expectedResponse != actual {
+			t.Errorf("Expected '%s', got '%s'", expectedResponse, actual)
+		}
 	}
 
 	cancel()
