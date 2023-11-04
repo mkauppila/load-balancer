@@ -23,7 +23,7 @@ func main() {
 }
 
 func run(args []string) {
-	contents, err := os.ReadFile("loadbalancer.conf")
+	contents, err := os.ReadFile("lb.conf")
 	if err != nil {
 		panic("no config file exists")
 	}
