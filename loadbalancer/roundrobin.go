@@ -2,7 +2,6 @@ package loadbalancer
 
 import (
 	"container/ring"
-	"fmt"
 	"sync"
 
 	"github.com/mkauppila/load-balancer/types"
@@ -38,7 +37,7 @@ func (r *RoundRobin) nextHealthyServer() (*types.Server, error) {
 
 		retryCounter--
 		if retryCounter <= 0 {
-			return nil, fmt.Errorf("all servers are dead")
+			return nil, errNoHealthyServers
 		}
 	}
 }

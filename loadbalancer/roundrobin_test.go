@@ -1,12 +1,13 @@
 package loadbalancer
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/mkauppila/load-balancer/types"
 )
 
-func TestRoundRobinLoopThroughServers(t *testing.T) {
+func TestLoopThroughServers(t *testing.T) {
 	servers := []*types.Server{
 		{Url: "url1", IsHealthy: true},
 		{Url: "url2", IsHealthy: true},
@@ -30,7 +31,21 @@ func TestRoundRobinLoopThroughServers(t *testing.T) {
 	}
 }
 
-func TestRoundRobinSkipOverUnhealthyServer(t *testing.T) {
+func TestGiveErrorIfAllServersAreUnhealthy(t *testing.T) {
+	servers := []*types.Server{
+		{Url: "url1", IsHealthy: false},
+		{Url: "url2", IsHealthy: false},
+		{Url: "url3", IsHealthy: false},
+	}
+	rr := CreateRoundRobin(servers)
+
+	_, err := rr.nextHealthyServer()
+	if !errors.Is(err, errNoHealthyServers) {
+		t.Errorf("Expected an error")
+	}
+}
+
+func TestSkipOverUnhealthyServer(t *testing.T) {
 	servers := []*types.Server{
 		{Url: "url", IsHealthy: true},
 		{Url: "url2", IsHealthy: true},
