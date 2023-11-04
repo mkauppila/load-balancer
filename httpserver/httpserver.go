@@ -6,7 +6,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 )
 
 func page(w http.ResponseWriter, r *http.Request, response string) {
@@ -20,11 +19,9 @@ func RunServer(started context.CancelFunc, ctx context.Context, confUrl string, 
 		page(writer, request, response)
 	})
 
-	addr, _ := url.Parse(confUrl)
-	fmt.Printf("Starting on addr: %s:%s\n", addr.Hostname(), addr.Port())
 	_, cancel := context.WithCancel(ctx)
 	go func() {
-		l, err := net.Listen("tcp", fmt.Sprintf("%s:%s", addr.Hostname(), addr.Port()))
+		l, err := net.Listen("tcp", confUrl)
 		if err != nil {
 			panic(err)
 		}

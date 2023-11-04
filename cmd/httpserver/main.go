@@ -26,9 +26,9 @@ func run(args []string) {
 	)
 
 	port := os.Getenv("HTTP_PORT")
-	addr := fmt.Sprintf("http://localhost:%s", port)
+	addr := fmt.Sprintf(":%s", port)
 
-	httpserver.RunServer(cancelFn, ctx, addr, "response")
+	httpserver.RunServer(cancelFn, ctx, addr, "response\n")
 
 	<-ctx.Done()
 }
