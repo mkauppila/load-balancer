@@ -1,7 +1,6 @@
 package loadbalancer
 
 import (
-	"fmt"
 	"math/rand"
 
 	"github.com/mkauppila/load-balancer/types"
@@ -9,10 +8,11 @@ import (
 
 type Random struct {
 	servers []*types.Server
+	rand    *rand.Rand
 }
 
-func CreateRandom(servers []*types.Server) *Random {
-	return &Random{servers}
+func CreateRandom(servers []*types.Server, rand *rand.Rand) *Random {
+	return &Random{servers: servers, rand: rand}
 }
 
 func (r *Random) nextHealthyServer() (*types.Server, error) {
@@ -24,9 +24,9 @@ func (r *Random) nextHealthyServer() (*types.Server, error) {
 	}
 
 	if len(aliveServers) == 0 {
-		return nil, fmt.Errorf("all servers are dead")
+		return nil, errNoHealthyServers
 	}
 
-	index := rand.Intn(len(aliveServers))
+	index := r.rand.Intn(len(aliveServers))
 	return aliveServers[index], nil
 }

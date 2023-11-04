@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"time"
 
@@ -38,7 +39,7 @@ func NewLoadBalancer(conf config.Configuration) LoadBalancer {
 
 	switch conf.Strategy {
 	case "random":
-		loadBalancer.strategy = CreateRandom(servers)
+		loadBalancer.strategy = CreateRandom(servers, rand.New(rand.NewSource(299)))
 	case "round-robin":
 		loadBalancer.strategy = CreateRoundRobin(servers)
 	default:
