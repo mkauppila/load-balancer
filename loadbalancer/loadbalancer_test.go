@@ -1,4 +1,4 @@
-package test
+package loadbalancer
 
 import (
 	"context"
@@ -9,8 +9,7 @@ import (
 	"testing"
 
 	"github.com/mkauppila/load-balancer/config"
-	"github.com/mkauppila/load-balancer/loadbalancer"
-	"github.com/mkauppila/load-balancer/test/httpserver"
+	"github.com/mkauppila/load-balancer/httpserver"
 	"github.com/mkauppila/load-balancer/types"
 )
 
@@ -59,7 +58,7 @@ func TestLoadBalancerRoundRobin(t *testing.T) {
 		"response 2",
 	}
 
-	srv := loadbalancer.NewLoadBalancer(cfg)
+	srv := NewLoadBalancer(cfg)
 	cancel := srv.Start(ctx)
 	lbAddr := fmt.Sprintf("http://localhost:%d", cfg.Port)
 
@@ -130,7 +129,7 @@ func TestLoadBalancerRandom(t *testing.T) {
 		"response 1",
 	}
 
-	srv := loadbalancer.NewLoadBalancer(cfg)
+	srv := NewLoadBalancer(cfg)
 	cancel := srv.Start(ctx)
 	lbAddr := fmt.Sprintf("http://localhost:%d", cfg.Port)
 
